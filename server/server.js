@@ -22,7 +22,7 @@ const io = new Server(server, {
 
 socketHandlers(io);
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.REACT_APP_SERVER_URL ;
 console.log("Mongo URI:", process.env.MONGO_URI);  // debug
 
 mongoose.connect(process.env.MONGO_URI, {
