@@ -23,26 +23,65 @@ export default function UserCursors({ cursors }) {
           <div
             key={id}
             className="user-cursor"
-            style={{ left: `${c.x * 100}%`, top: `${c.y * 100}%` }}
+            style={{
+              left: `${c.x * 100}%`,
+              top: `${c.y * 100}%`,
+              zIndex: 1000,
+              position: 'absolute',
+              pointerEvents: 'none',
+              transform: 'translate(-50%, -50%)',
+            }}
           >
-            {c.name && <div className="cursor-name">{c.name}</div>}
+            {/* Username */}
+           {c.name && (
+  <div
+    className="cursor-name"
+    style={{
+      background: c.color || '#0ff', // colored rectangle matching cursor
+      color: '#000', // text color inside rectangle
+      padding: '2px 6px',
+      borderRadius: '4px',
+      fontSize: '0.8rem',
+      fontWeight: 'bold',
+      marginBottom: '4px',
+      whiteSpace: 'nowrap',
+      userSelect: 'none',
+      pointerEvents: 'none',
+      textAlign: 'center',
+    }}
+  >
+    {c.name}
+  </div>
+)}
+
+
+            {/* Cursor dot */}
             <span
               className="dot"
               style={{
-                background: c.color,
-                boxShadow: `0 0 12px ${c.color}, 0 0 24px ${c.color}`,
+                background: c.color || '#0ff',
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                boxShadow: `0 0 8px ${c.color || '#0ff'}, 0 0 16px ${c.color || '#0ff'}`,
+                display: 'block',
               }}
             ></span>
 
+            {/* Trail dots */}
             {trailMap[id] &&
               trailMap[id].map((pos, idx) => (
                 <span
                   key={idx}
                   className="trail-dot"
                   style={{
+                    position: 'absolute',
                     left: `${(pos.x - c.x) * 100}%`,
                     top: `${(pos.y - c.y) * 100}%`,
-                    background: c.color,
+                    background: c.color || '#0ff',
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
                     opacity: (idx + 1) / trailMap[id].length / 1.5,
                     transform: `scale(${(idx + 1) / trailMap[id].length})`,
                   }}

@@ -5,21 +5,21 @@
   z-index: 9999;
   display: flex;
   align-items: center;
-  flex-direction: column;
+  flex-direction: column; /* keep name above dot */
 }
 
-/* Username label above cursor */
+
 .cursor-name {
-  color: #fff;
-  font-size: 0.75rem;
+  color: #000000; /* Neon cyan visible on dark background */
+  font-size: 3rem;
   font-weight: bold;
-  text-shadow: 0 0 6px #00ffe7, 0 0 12px #ff00cc;
+  /* animation: floatName 1.5s ease-in-out infinite alternate; */
+  font-family: sans-serif;
   margin-bottom: 6px;
-  white-space: nowrap;
-  pointer-events: none;
-  animation: floatName 1.5s ease-in-out infinite alternate;
-}
+  position: relative;  /* Make it appear relative to cursor */
+  z-index: 10;         /* Ensure it's above the dot */
 
+}
 /* Cursor dot */
 .user-cursor .dot {
   width: 16px;
@@ -30,8 +30,8 @@
   z-index: 10;
 }
 
-/* Smooth trail dots */
-.user-cursor .trail-dot {
+
+/* .user-cursor .trail-dot {
   position: absolute;
   width: 12px;
   height: 12px;
@@ -40,7 +40,7 @@
   pointer-events: none;
   z-index: 5;
   transition: all 0.1s linear;
-}
+} */
 
 /* Animations */
 @keyframes pulse {
@@ -54,8 +54,10 @@
   100% { box-shadow: 0 0 8px currentColor, 0 0 16px currentColor; }
 }
 
+
 @keyframes floatName {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-  100% { transform: translateY(0); }
+  0% { top: 0; }
+  50% { top: -4px; }
+  100% { top: 0; }
 }
+

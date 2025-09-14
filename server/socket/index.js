@@ -1,74 +1,160 @@
-const Room = require('../models/Room');
+// // socket/index.js
+// module.exports = function socketHandlers(io) {
+//   const rooms = {}; // roomId -> { users: { socketId: { name, color } } }
 
-module.exports = (io) => {
-  const roomsUsers = {};
+//   function randomColor() {
+//     const colors = ['#0ff', '#f0f', '#ff0', '#f00', '#0f0', '#00f'];
+//     return colors[Math.floor(Math.random() * colors.length)];
+//   }
+
+//   io.on('connection', (socket) => {
+//     console.log('New connection:', socket.id);
+
+//     // ✅ Join room
+//     socket.on('join-room', ({ roomId, name }) => {
+//       socket.join(roomId);
+
+//       if (!rooms[roomId]) rooms[roomId] = { users: {} };
+//       rooms[roomId].users[socket.id] = { name, color: randomColor() };
+
+//       const color = rooms[roomId].users[socket.id].color;
+//       socket.emit('joined', { color });
+
+//       io.to(roomId).emit('user-count', {
+//         count: Object.keys(rooms[roomId].users).length,
+//       });
+//     });
+
+//     // ✅ Cursor updates
+//     socket.on('cursor-update', ({ roomId, x, y, active }) => {
+//       const user = rooms[roomId]?.users[socket.id];
+//       if (!user) return;
+
+//       io.to(roomId).emit('cursor-update', {
+//         socketId: socket.id,
+//         x,
+//         y,
+//         active,
+//         color: user.color,
+//         name: user.name,
+//       });
+//     });
+
+//     // ✅ Drawing sync
+//     socket.on('draw-start', ({ roomId, stroke }) => {
+//       socket.to(roomId).emit('draw-start', { stroke });
+//     });
+
+//     socket.on('draw-end', ({ roomId, command }) => {
+//       socket.to(roomId).emit('draw-end', { command });
+//     });
+
+//     // ✅ Clear canvas (only once!)
+//     socket.on('clear-canvas', ({ roomId }) => {
+//       io.to(roomId).emit('clear-canvas');
+//     });
+
+//     // ✅ Leave room
+//     socket.on('leave-room', ({ roomId }) => {
+//       socket.leave(roomId);
+//       if (rooms[roomId]) {
+//         delete rooms[roomId].users[socket.id];
+
+//         io.to(roomId).emit('user-count', {
+//           count: Object.keys(rooms[roomId].users).length,
+//         });
+//         io.to(roomId).emit('cursor-remove', { socketId: socket.id });
+
+//         // Clean up empty room
+//         if (Object.keys(rooms[roomId].users).length === 0) {
+//           delete rooms[roomId];
+//         }
+//       }
+//     });
+
+//     // ✅ Disconnect cleanup
+//     socket.on('disconnect', () => {
+//       for (const roomId in rooms) {
+//         if (rooms[roomId].users[socket.id]) {
+//           delete rooms[roomId].users[socket.id];
+
+//           io.to(roomId).emit('user-count', {
+//             count: Object.keys(rooms[roomId].users).length,
+//           });
+//           io.to(roomId).emit('cursor-remove', { socketId: socket.id });
+
+//           if (Object.keys(rooms[roomId].users).length === 0) {
+//             delete rooms[roomId];
+//           }
+//         }
+//       }
+//     });
+//   });
+// };
+
+
+module.exports = function socketHandlers(io) {
+  const rooms = {}; // roomId -> { users: {}, strokes: [] }
+
+  function randomColor() {
+    const colors = ['#0ff', '#f0f', '#ff0', '#f00', '#0f0', '#00f'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
 
   io.on('connection', (socket) => {
-    console.log('client connected', socket.id);
+    console.log('New connection:', socket.id);
 
-    socket.on('join-room', async ({ roomId }) => {
-      try {
-        socket.join(roomId);
-        const palette = ['#e6194b','#3cb44b','#4363d8','#f58231','#42d4f4'];
-        const color = palette[Math.floor(Math.random()*palette.length)];
-        if (!roomsUsers[roomId]) roomsUsers[roomId] = {};
-        roomsUsers[roomId][socket.id] = { color };
+    socket.on('join-room', ({ roomId, name, color }) => {
+      socket.join(roomId);
 
-        const usersCount = Object.keys(roomsUsers[roomId]).length;
-        io.to(roomId).emit('user-count', { count: usersCount });
+      if (!rooms[roomId]) rooms[roomId] = { users: {}, strokes: [] };
+      rooms[roomId].users[socket.id] = { name, color: color || randomColor() };
 
-        const room = await Room.findOne({ roomId });
-        if (room && room.drawingData && room.drawingData.length) {
-          socket.emit('load-canvas', room.drawingData);
-        }
+      // Send color and existing strokes to client
+      socket.emit('joined', { color: rooms[roomId].users[socket.id].color, strokes: rooms[roomId].strokes });
 
-        socket.emit('joined', { socketId: socket.id, color });
-      } catch (e) { console.error('join-room error', e); }
+      io.to(roomId).emit('user-count', { count: Object.keys(rooms[roomId].users).length });
     });
 
-    socket.on('cursor-move', ({ roomId, x, y, active }) => {
-      socket.to(roomId).emit('cursor-update', { socketId: socket.id, x, y, active, color: roomsUsers[roomId] && roomsUsers[roomId][socket.id].color });
+    socket.on('cursor-update', ({ roomId, x, y, active }) => {
+      const user = rooms[roomId]?.users[socket.id];
+      if (!user) return;
+      io.to(roomId).emit('cursor-update', {
+        socketId: socket.id, x, y, active, color: user.color, name: user.name,
+      });
     });
 
-    socket.on('draw-start', ({ roomId, stroke }) => {
-      socket.to(roomId).emit('draw-start', { socketId: socket.id, stroke });
+    socket.on('draw-start', ({ roomId, stroke }) => socket.to(roomId).emit('draw-start', { stroke }));
+    socket.on('draw-move', ({ roomId, points, color, width }) => socket.to(roomId).emit('draw-move', { points, color, width }));
+
+    socket.on('draw-end', ({ roomId, command }) => {
+      if (!rooms[roomId].strokes) rooms[roomId].strokes = [];
+      rooms[roomId].strokes.push(command);
+      socket.to(roomId).emit('draw-end', { command });
     });
 
-    socket.on('draw-move', ({ roomId, points }) => {
-      socket.to(roomId).emit('draw-move', { socketId: socket.id, points });
-    });
-
-    socket.on('draw-end', async ({ roomId, command }) => {
-      socket.to(roomId).emit('draw-end', { socketId: socket.id, command });
-      try {
-        await Room.updateOne({ roomId }, { $push: { drawingData: command }, $set: { lastActivity: new Date() } }, { upsert: true });
-      } catch (err) { console.error('persist error', err); }
-    });
-
-    socket.on('clear-canvas', async ({ roomId }) => {
-      socket.to(roomId).emit('clear-canvas');
-      try {
-        await Room.updateOne({ roomId }, { $push: { drawingData: { type: 'clear', data: {}, timestamp: new Date() } }, $set: { lastActivity: new Date() } }, { upsert: true });
-      } catch (err) { console.error(err); }
+    socket.on('clear-canvas', ({ roomId }) => {
+      if (rooms[roomId]) rooms[roomId].strokes = [];
+      io.to(roomId).emit('clear-canvas');
     });
 
     socket.on('leave-room', ({ roomId }) => {
       socket.leave(roomId);
-      if (roomsUsers[roomId]) delete roomsUsers[roomId][socket.id];
-      const usersCount = roomsUsers[roomId] ? Object.keys(roomsUsers[roomId]).length : 0;
-      io.to(roomId).emit('user-count', { count: usersCount });
+      if (rooms[roomId]) {
+        delete rooms[roomId].users[socket.id];
+        io.to(roomId).emit('user-count', { count: Object.keys(rooms[roomId].users).length });
+        io.to(roomId).emit('cursor-remove', { socketId: socket.id });
+      }
     });
 
     socket.on('disconnect', () => {
-      for (const roomId of Object.keys(roomsUsers)) {
-        if (roomsUsers[roomId][socket.id]) {
-          delete roomsUsers[roomId][socket.id];
-          const usersCount = Object.keys(roomsUsers[roomId]).length;
-          io.to(roomId).emit('user-count', { count: usersCount });
+      for (const roomId in rooms) {
+        if (rooms[roomId].users[socket.id]) {
+          delete rooms[roomId].users[socket.id];
+          io.to(roomId).emit('user-count', { count: Object.keys(rooms[roomId].users).length });
           io.to(roomId).emit('cursor-remove', { socketId: socket.id });
         }
       }
-      console.log('client disconnected', socket.id);
     });
   });
 };
