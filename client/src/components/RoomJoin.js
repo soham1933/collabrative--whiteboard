@@ -7,7 +7,7 @@ export default function RoomJoin({ onJoin }) {
 
   const join = async () => {
     const res = await fetch(
-      (process.env.REACT_APP_SERVER_URL || '') + '/api/rooms/join',
+      (process.env.REACT_APP_SERVER_URL || '') + 'api/rooms/join',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
