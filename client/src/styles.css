@@ -1,0 +1,15 @@
+
+:root {
+  --bg-color: #0a0f1e;      /* deep space dark */
+  --accent-color: #00ffe7;  /* neon cyan */
+  --secondary-color: #ff00ff; /* neon magenta */
+  --text-color: #e0e0e0;
+}
+
+body {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif; /* futuristic font */
+  background: var(--bg-color);
+  color: var(--text-color);
+  overflow-x: hidden;
+}

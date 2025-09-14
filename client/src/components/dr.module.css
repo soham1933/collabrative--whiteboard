@@ -1,0 +1,30 @@
+.drawing-canvas {
+  border: 2px solid var(--accent-color);
+  border-radius: 12px;
+  background: rgba(10, 15, 30, 0.95);
+  box-shadow: 0 0 20px rgba(0, 255, 231, 0.3);
+  width: 100%;
+  height: 70vh;
+  display: block;
+  cursor: crosshair;
+  margin: auto;
+  transition: 0.3s;
+}
+
+.drawing-canvas:active {
+  box-shadow: 0 0 30px var(--secondary-color);
+}
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1rem;
+  }
+  .drawing-canvas {
+    height: 60vh;
+  }
+  .user-count {
+    font-size: 0.9rem;
+  }
+}
+
