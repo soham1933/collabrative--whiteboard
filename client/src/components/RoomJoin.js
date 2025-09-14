@@ -6,17 +6,18 @@ export default function RoomJoin({ onJoin }) {
   const [name, setName] = useState(''); // new username state
 
   const join = async () => {
-    const res = await fetch(
-      (process.env.REACT_APP_SERVER_URL || '') + 'api/rooms/join',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomId: code ? code.trim() : undefined,
-          name: name.trim() || 'Anonymous',
-        }),
-      }
-    );
+const res = await fetch(
+  (process.env.REACT_APP_SERVER_URL ) + '/api/rooms/join',
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      roomId: code ? code.trim() : undefined,
+      name: name.trim() || 'Anonymous',
+    }),
+  }
+);
+
     const data = await res.json();
     onJoin(data.roomId, name || 'Anonymous'); // pass name to parent
   };
