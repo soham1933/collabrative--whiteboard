@@ -38,6 +38,13 @@ mongoose.connect(process.env.MONGO_URI, {
   server.listen(PORT, () => console.log(`Server running without DB on ${PORT}`));
 });
 
+const path = require('path');
+
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
 
 // cleanup old rooms every hour
 const Room = require('./models/Room');
