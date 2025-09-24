@@ -5,22 +5,32 @@ export default function RoomJoin({ onJoin }) {
   const [code, setCode] = useState('');
   const [name, setName] = useState(''); // new username state
 
-  const join = async () => {
-const res = await fetch(
-  (process.env.REACT_APP_SERVER_URL) + '/api/rooms/join',
-  {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      roomId: code ? code.trim() : undefined,
-      name: name.trim() || 'Anonymous',
-    }),
-  }
-);
+const join = async () => {
+  try {
+    const res = await fetch(
+      process.env.REACT_APP_SERVER_URL + '/api/rooms/join',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'json' },
+        body: JSON.stringify({
+          roomId: code ? code.trim() : undefined,
+          name: name.trim() || 'Anonymous',
+        }),
+      }
+    );
 
-    const data = await res.json();
-    onJoin(data.roomId, name || 'Anonymous'); // pass name to parent
-  };
+    if (!res.ok) {
+      const text = await res.text(); // fallback to text for debugging
+      throw new Error(`Server error: ${res.status} ${text}`);
+    }
+
+    const data = await res.json(); // parse only if valid JSON
+    onJoin(data.roomId, name || 'Anonymous');
+  } catch (err) {
+    console.error('Join failed:', err);
+    alert('Could not join room: ' + err.message);
+  }
+};
 
   const createNew = () => join();
 
