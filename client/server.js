@@ -5,8 +5,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-const roomsRouter = require('./server/routes/rooms');
-const socketHandlers = require('./server/socket'); // <-- updated socket handler
+const roomsRouter = require('./rooms');
+const socketHandlers = require('.'); // <-- updated socket handler
 
 const path = require('path');
 
@@ -47,7 +47,7 @@ app.get('*', (req, res) => {
 });
 
 // Cleanup old rooms every hour
-const Room = require('./server/models/Room');
+const Room = require('./Room');
 setInterval(async () => {
   try {
     const cutoff = new Date(Date.now() - 24*60*60*1000);
